@@ -3,6 +3,7 @@
 ## Integrantes
 
 **Equipo:** 
+- Cristian Dikran Daglaroglu
 
 ## Fecha de entrega de parte 1
 
