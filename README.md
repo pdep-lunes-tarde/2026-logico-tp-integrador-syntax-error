@@ -4,6 +4,7 @@
 
 **Equipo:** 
 - Cristian Dikran Daglaroglu
+- Andrea Noemi Marzetti
 
 ## Fecha de entrega de parte 1
 
