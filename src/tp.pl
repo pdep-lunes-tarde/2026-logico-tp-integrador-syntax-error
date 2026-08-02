@@ -87,12 +87,74 @@ pasoAlOlvido(Hazania, Anio) :-
     conocioHazania(_, Hazania),
     \+ ( conocioHazania(Persona, Hazania), recuerdaHazania(Persona, Hazania, Anio) ).
 
-% Punto 3 ()
+% Punto 3 (Andrea)
 % a)
+% diaFestivo(Pueblo, Hazania, AñoInicio)
+diaFestivo(weise, destruirReyDemonio, 1340).
 
+% estatua(Pueblo, Material, Nombre, Hazania, AñoConstruccion)
+estatua(auberst, bronce, equipoHeroes, destruirReyDemonio, 1370).
+estatua(auberst, marmol, heroeDelSur, destruirSchlatOmnisciente, 1340).
+
+% mantenimiento(Estatua, Año)
+mantenimiento(equipoHeroes, 1400).
+mantenimiento(equipoHeroes, 1450).
+mantenimiento(heroeDelSur, 1410).
 
 % b)
+duracionMaterial(marmol,30).
+duracionMaterial(bronce,15).
 
+% último mantenimiento ocurrido hasta el año consultado
+ultimoMantenimiento(Estatua, AnioActual, AnioMantenimiento):-
+    mantenimiento(Estatua, AnioMantenimiento),
+    AnioMantenimiento =< AnioActual,
+    \+ (
+        mantenimiento(Estatua, Otro),
+        Otro =< AnioActual,
+        Otro > AnioMantenimiento
+    ).
+
+% último cuidado = último mantenimiento o construcción
+ultimoCuidado(Estatua, AnioActual, Ultimo):-
+    ultimoMantenimiento(Estatua, AnioActual, Ultimo).
+
+ultimoCuidado(Estatua, AnioActual, Construccion):-
+    estatua(_, _, Estatua, _, Construccion),
+    Construccion =< AnioActual,
+    \+ (
+        mantenimiento(Estatua, M),
+        M =< AnioActual
+    ).
+
+estatuaEnBuenEstado(Estatua, AnioActual):-
+    estatua(_, Material, Estatua, _, _),
+    ultimoCuidado(Estatua, AnioActual, Ultimo),
+    duracionMaterial(Material, Duracion),
+    AnioActual =< Ultimo + Duracion.
+
+% si nació después de la conmemoración, la conoce al nacer
+% si ya había nacido, la conoce cuando empieza la conmemoración
+anioConocimiento(Persona, InicioConmemoracion, Anio):-
+    habitante(Persona, _, Nacimiento, _),
+    Anio is max(Nacimiento, InicioConmemoracion).
+
+% recuerda por día festivo
+recuerdaHazania(Persona, Hazania, AnioActual):-
+    habitante(Persona, _, _, Pueblo),
+    diaFestivo(Pueblo, Hazania, Inicio),
+    anioConocimiento(Persona, Inicio, Desde),
+    AnioActual >= Desde,
+    estaVivo(Persona, AnioActual).
+
+% recuerda por estatua
+recuerdaHazania(Persona, Hazania, AnioActual):-
+    habitante(Persona, _, _, Pueblo),
+    estatua(Pueblo, _, Estatua, Hazania, Inicio),
+    anioConocimiento(Persona, Inicio, Desde),
+    AnioActual >= Desde,
+    estatuaEnBuenEstado(Estatua, AnioActual),
+    estaVivo(Persona, AnioActual).
 
 :- begin_tests(tpIntegrador, []).
 % Tests Punto 1
@@ -133,6 +195,14 @@ test("destruir al demonio Aura paso al olvido en 1460", nondet):-
 test("destruir al demonio Aura no paso al olvido en 1440"):-
     \+ pasoAlOlvido(destruirDemonioAura, 1440).
 
-% Tests Punto 3
+% Tests Punto 3 (Andrea)
 
+test("Lawine recuerda destruir al rey demonio en 1400", nondet):-
+    recuerdaHazania(lawine, destruirReyDemonio, 1400).
+
+test("Lawine no recuerda destruir al rey demonio en 1390"):-
+    \+ recuerdaHazania(lawine, destruirReyDemonio, 1390).
+
+test("Fern recuerda destruir al rey demonio en 1400", nondet):-
+    recuerdaHazania(fern, destruirReyDemonio, 1400).
 :- end_tests(tpIntegrador).
