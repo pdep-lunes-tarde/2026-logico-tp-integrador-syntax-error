@@ -17,18 +17,15 @@ vidaPromedio(humano, 80).
 vidaPromedio(enano, 350).
 
 estaVivo(Habitante, AnioActual) :-
-    habitante(Habitante, humano, AnioNacimiento, _),
+    habitante(Habitante, Raza, AnioNacimiento, _),
     AnioNacimiento =< AnioActual,
-    AnioActual =< AnioNacimiento + 80.
-
-estaVivo(Habitante, AnioActual) :-
-    habitante(Habitante, enano, AnioNacimiento, _),
-    AnioNacimiento =< AnioActual,
-    AnioActual =< AnioNacimiento + 350.
-
-estaVivo(Habitante, AnioActual) :-
-    habitante(Habitante, elfo, AnioNacimiento, _),
-    AnioNacimiento =< AnioActual.
+    noMurio(Raza, AnioNacimiento, AnioActual).
+    
+noMurio(elfo, _, _).
+    
+noMurio(Raza, AnioNacimiento, AnioActual) :-
+vidaPromedio(Raza, Vida),
+AnioActual =< AnioNacimiento + Vida.
 
 % Punto 2 (Fran)
 % presencio(Persona, Hazania, AnioEnQuePreseencio, LugarSegunEsaPersona, HeroesSegunEsaPersona)
@@ -168,7 +165,7 @@ test("Voll está vivo en 1550 ya que nació en 1200 y por ser enano vive 350 añ
     estaVivo(voll, 1550).
 test("Voll ya no está vivo en 1551."):-
     \+ estaVivo(voll, 1551).
-test("Serie está viva en el año 5000 porque los elfos no mueren de viejos."):-
+test("Serie está viva en el año 5000 porque los elfos no mueren de viejos.", nondet):-
     estaVivo(serie, 5000).
 
 % Tests Punto 2
