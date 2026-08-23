@@ -116,6 +116,90 @@ estatuaEnBuenEstado(Estatua, AnioActual) :-
     duracionMaterial(Material, Duracion),
     AnioActual =< AnioDelCuidado + Duracion.
 
+% Punto 4 Fran
+pueblo(auberst).
+pueblo(ende).
+pueblo(weise).
+pueblo(riegel).
+pueblo(klares).
+
+habitanteVivoDe(Pueblo, Persona, Anio) :-
+    habitante(Persona, _, _, Pueblo),
+    estaVivo(Persona, Anio).
+
+% a) En un pueblo se recuerda una hazania?
+seRecuerdaEn(Pueblo, Hazania, Anio) :-
+    habitante(Persona, _, _, Pueblo),
+    recuerdaHazania(Persona, Hazania, Anio).
+
+hazaniasRecordadasEn(Pueblo, Anio, Hazanias) :-
+    pueblo(Pueblo),
+    findall(Hazania, seRecuerdaEn(Pueblo, Hazania, Anio), ConRepetidos),
+    sort(ConRepetidos, Hazanias).
+
+% b) Cuantas paginas se leyeron en un pueblo en un anio?
+paginasLeidasPor(Pueblo, Anio, Paginas) :-
+    habitante(Persona, _, _, Pueblo),
+    conoce(Persona, _, Anio, libro(Paginas)).
+
+paginasLeidasEn(Pueblo, Anio, Total) :-
+    pueblo(Pueblo),
+    findall(Paginas, paginasLeidasPor(Pueblo, Anio, Paginas), TodasLasPaginas),
+    sum_list(TodasLasPaginas, Total).
+
+% c) Cual es el pueblo mas lector?
+puebloMasLector(Pueblo, Anio) :-
+    paginasLeidasEn(Pueblo, Anio, Total),
+    Total > 0,
+    forall(
+        paginasLeidasEn(_, Anio, OtroTotal),
+        Total >= OtroTotal
+    ).
+
+% d) Un pueblo es musical?
+seRecuerdaPorCancionEn(Pueblo, Hazania, Anio) :-
+    habitante(Persona, _, _, Pueblo),
+    recuerdaHazaniaPor(Persona, Hazania, Anio, cancion).
+
+puebloMusical(Pueblo, Anio) :-
+    hazaniasRecordadasEn(Pueblo, Anio, Hazanias),
+    length(Hazanias, Total),
+    Total > 0,
+    findall(Hazania, seRecuerdaPorCancionEn(Pueblo, Hazania, Anio), ConRepetidas),
+    sort(ConRepetidas, PorCancion),
+    length(PorCancion, CantidadMusicales),
+    CantidadMusicales * 2 > Total.
+
+% e) Un pueblo es chismoso?
+puebloChismoso(Pueblo, Anio) :-
+    pueblo(Pueblo),
+    seRecuerdaEn(Pueblo, _, Anio),
+    forall(
+        seRecuerdaEn(Pueblo, Hazania, Anio),
+        not(hazaniaCorroborada(Hazania))
+    ).
+
+% f) Una hazania es importante para un pueblo?
+hazaniaImportantePara(Pueblo, Hazania, Anio) :-
+    seRecuerdaEn(Pueblo, Hazania, Anio),
+    forall(
+        habitanteVivoDe(Pueblo, Persona, Anio),
+        recuerdaHazania(Persona, Hazania, Anio)
+    ).
+
+% g) Un pueblo vive tiempos sin precedentes?
+fuePresenciadaEn(Pueblo, Hazania, Anio) :-
+    habitante(Persona, _, _, Pueblo),
+    recuerdaHazaniaPor(Persona, Hazania, Anio, presenciada).
+
+viveTiemposSinPrecedentes(Pueblo, Anio) :-
+    pueblo(Pueblo),
+    hazaniaImportantePara(Pueblo, _, Anio),
+    forall(
+        hazaniaImportantePara(Pueblo, Hazania, Anio),
+        fuePresenciadaEn(Pueblo, Hazania, Anio)
+    ).
+
 :- begin_tests(tpIntegrador, []).
 % Tests Punto 1
 test("Kanne (humana, nacida en 1365) está viva en 1370.", nondet):-
@@ -165,4 +249,44 @@ test("Lawine no recuerda destruir al rey demonio en 1390"):-
 
 test("Fern recuerda destruir al rey demonio en 1400", nondet):-
     recuerdaHazania(fern, destruirReyDemonio, 1400).
+
+% Tests Punto 4 Fran
+
+test("En Weise se recuerda destruir al rey demonio en 1400", nondet):-
+    seRecuerdaEn(weise, destruirReyDemonio, 1400).
+test("En Klares se recuerda rescatar a la hermana de Wirbel en 1395", nondet):-
+    seRecuerdaEn(klares, rescatarHermanaWirbel, 1395).
+test("En Klares no se recuerda destruir al rey demonio en 1395"):-
+    \+ seRecuerdaEn(klares, destruirReyDemonio, 1395).
+
+test("En Weise se leyeron 100 paginas en 1335", nondet):-
+    paginasLeidasEn(weise, 1335, 100).
+test("En Weise se leyeron 0 paginas en 1336", nondet):-
+    paginasLeidasEn(weise, 1336, 0).
+
+test("Ende es el pueblo mas lector en 1400", nondet):-
+    puebloMasLector(ende, 1400).
+test("Weise no es el pueblo mas lector en 1400"):-
+    \+ puebloMasLector(weise, 1400).
+
+test("Auberst es musical en 1395", nondet):-
+    puebloMusical(auberst, 1395).
+test("Weise no es musical en 1400"):-
+    \+ puebloMusical(weise, 1400).
+
+test("Ende es chismoso en 1420 ya que solo se recuerda destruir al demonio Aura que no esta corroborada", nondet):-
+    puebloChismoso(ende, 1420).
+test("Weise no es chismoso en 1400"):-
+    \+ puebloChismoso(weise, 1400).
+
+test("destruir al rey demonio es importante para Weise en 1400", nondet):-
+    hazaniaImportantePara(weise, destruirReyDemonio, 1400).
+test("recuperar al gato perdido no es importante para Weise en 1400 (solo Kanne la recuerda)"):-
+    \+ hazaniaImportantePara(weise, recuperarGatoPerdido, 1400).
+
+test("Klares vive tiempos sin precedentes en 1395", nondet):-
+    viveTiemposSinPrecedentes(klares, 1395).
+test("Weise no vive tiempos sin precedentes en 1400, destruir al rey demonio es importante para Weise pero nadie de alli presencio esa hazana"):-
+    \+ viveTiemposSinPrecedentes(weise, 1400).
+
 :- end_tests(tpIntegrador).
