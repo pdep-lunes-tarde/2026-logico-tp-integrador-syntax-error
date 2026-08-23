@@ -28,130 +28,93 @@ vidaPromedio(Raza, Vida),
 AnioActual =< AnioNacimiento + Vida.
 
 % Punto 2 (Fran)
-% presencio(Persona, Hazania, AnioEnQuePreseencio, LugarSegunEsaPersona, HeroesSegunEsaPersona)
-presencio(wirbel, rescatarHermanaWirbel, 1390, klares, [strak, fern]).
-presencio(frieren, rescatarHermanaWirbel, 1390, klares, [strak, fern]).
-presencio(kanne, recuperarGatoPerdido, 1375, weise, [himmel, frieren]).
-% escucho(Persona, Hazania, AnioEnQueEscucho, LugarSegunEsaPersona, HeroesSegunEsaPersona)
-escucho(lawine, destruirDemonioAura, 1393, weise, [frieren]).
-% leyo(Persona, Hazania, AnioEnQueLeyo, Paginas, LugarSegunEsaPersona, HeroesSegunEsaPersona)
-leyo(voll, destruirDemonioAura, 1400, 50, auberst, [denek]).
-leyo(serie, destruirReyDemonio, 1335, 100, ende, [frieren, himmel, heiter, eisen]).
-% a) 
-recuerdaHazania(Persona, Hazania, AnioActual) :-
-    presencio(Persona, Hazania, AnioPresencio, _, _),
-    AnioPresencio =< AnioActual,
-    estaVivo(Persona, AnioActual).
+% conoce(Persona, Hazania, AnioEnQueLaConocio, Forma)
+conoce(wirbel,  hazania(rescatarHermanaWirbel, klares), 1390, presenciada).
+conoce(frieren, hazania(rescatarHermanaWirbel, klares), 1390, presenciada).
+conoce(kanne,   hazania(recuperarGatoPerdido, weise),   1375, presenciada).
+conoce(lawine,  hazania(destruirDemonioAura, weise),    1393, cancion).
+conoce(voll,    hazania(destruirDemonioAura, auberst),  1400, libro(50)).
+conoce(serie,   hazania(destruirReyDemonio, ende),      1335, libro(100)).
+
+% participo(Heroe, Hazania)
+participo(strak,   hazania(rescatarHermanaWirbel, klares)).
+participo(fern,    hazania(rescatarHermanaWirbel, klares)).
+participo(himmel,  hazania(recuperarGatoPerdido, weise)).
+participo(frieren, hazania(recuperarGatoPerdido, weise)).
+participo(frieren, hazania(destruirDemonioAura, weise)).
+participo(denek,   hazania(destruirDemonioAura, auberst)).
+participo(frieren, hazania(destruirReyDemonio, ende)).
+participo(himmel,  hazania(destruirReyDemonio, ende)).
+participo(heiter,  hazania(destruirReyDemonio, ende)).
+participo(eisen,   hazania(destruirReyDemonio, ende)).
+participo(elHeroeDelSur, hazania(destruirSchlatOmnisciente, ende)).
+
+duracionDelRecuerdo(cancion, 15).
+duracionDelRecuerdo(libro(Paginas), Paginas).
+
+recuerdaHazaniaPor(Persona, Hazania, AnioActual, Forma) :-
+    conoce(Persona, hazania(Hazania, _), AnioQueLaConocio, Forma),
+    AnioQueLaConocio =< AnioActual,
+    estaVivo(Persona, AnioActual),
+    not(seLeOlvido(Forma, AnioQueLaConocio, AnioActual)).
+
+seLeOlvido(Forma, AnioQueLaConocio, AnioActual) :-
+    duracionDelRecuerdo(Forma, Duracion),
+    AnioActual > AnioQueLaConocio + Duracion.
 
 recuerdaHazania(Persona, Hazania, AnioActual) :-
-    escucho(Persona, Hazania, AnioEscucho, _, _),
-    AnioActual >= AnioEscucho,
-    AnioActual =< AnioEscucho + 15,
-    estaVivo(Persona, AnioActual).
+    recuerdaHazaniaPor(Persona, Hazania, AnioActual, _).
 
-recuerdaHazania(Persona, Hazania, AnioActual) :-
-    leyo(Persona, Hazania, AnioLeyo, Paginas, _, _),
-    AnioActual >= AnioLeyo,
-    AnioActual =< AnioLeyo + Paginas,
-    estaVivo(Persona, AnioActual).
+% b) Una hazania esta corroborada?
+seConoceHazania(Hazania, Lugar) :-
+    conoce(_, hazania(Hazania, Lugar), _, _).
 
-% b)
-version(Hazania, Lugar, HeroesOrdenados) :-
-    presencio(_, Hazania, _, Lugar, Heroes),
-    sort(Heroes, HeroesOrdenados).
-
-version(Hazania, Lugar, HeroesOrdenados) :-
-    escucho(_, Hazania, _, Lugar, Heroes),
-    sort(Heroes, HeroesOrdenados).
-
-version(Hazania, Lugar, HeroesOrdenados) :-
-    leyo(_, Hazania, _, _, Lugar, Heroes),
-    sort(Heroes, HeroesOrdenados).
- 
 hazaniaCorroborada(Hazania) :-
-    findall((Lugar, Heroes), version(Hazania, Lugar, Heroes), Versiones),
-    sort(Versiones, VersionesUnicas),
-    length(VersionesUnicas, 1).
+    seConoceHazania(Hazania, Lugar),
+    forall(
+        seConoceHazania(Hazania, OtroLugar),
+        OtroLugar = Lugar
+    ).
+% c) Una hazania paso al olvido?
+pasoAlOlvido(Hazania, AnioActual) :-
+    seConoceHazania(Hazania, _),
+    not(recuerdaHazania(_, Hazania, AnioActual)).
 
-
-
-% c)
-conocioHazania(Persona, Hazania) :- presencio(Persona, Hazania, _, _, _).
-conocioHazania(Persona, Hazania) :- escucho(Persona, Hazania, _, _, _).
-conocioHazania(Persona, Hazania) :- leyo(Persona, Hazania, _, _, _, _).
-
-pasoAlOlvido(Hazania, Anio) :-
-    conocioHazania(_, Hazania),
-    \+ ( conocioHazania(Persona, Hazania), recuerdaHazania(Persona, Hazania, Anio) ).
 
 % Punto 3 (Andrea)
-% a)
-% diaFestivo(Pueblo, Hazania, AñoInicio)
-diaFestivo(weise, destruirReyDemonio, 1340).
+% conmemora(Pueblo, Hazania, Forma, AnioEnQueEmpezo)
+conmemora(weise,   hazania(destruirReyDemonio, ende),        diaFestivo,           1340).
+conmemora(auberst, hazania(destruirReyDemonio, ende),        estatua(equipoHeroes), 1370).
+conmemora(auberst, hazania(destruirSchlatOmnisciente, ende), estatua(heroeDelSur),  1340).
 
-% estatua(Pueblo, Material, Nombre, Hazania, AñoConstruccion)
-estatua(auberst, bronce, equipoHeroes, destruirReyDemonio, 1370).
-estatua(auberst, marmol, heroeDelSur, destruirSchlatOmnisciente, 1340).
+materialDeEstatua(equipoHeroes, bronce).
+materialDeEstatua(heroeDelSur, marmol).
 
-% mantenimiento(Estatua, Año)
+% mantenimiento(Estatua, Anio)
 mantenimiento(equipoHeroes, 1400).
 mantenimiento(equipoHeroes, 1450).
 mantenimiento(heroeDelSur, 1410).
 
-% b)
-duracionMaterial(marmol,30).
-duracionMaterial(bronce,15).
+duracionMaterial(marmol, 30).
+duracionMaterial(bronce, 15).
 
-% último mantenimiento ocurrido hasta el año consultado
-ultimoMantenimiento(Estatua, AnioActual, AnioMantenimiento):-
-    mantenimiento(Estatua, AnioMantenimiento),
-    AnioMantenimiento =< AnioActual,
-    \+ (
-        mantenimiento(Estatua, Otro),
-        Otro =< AnioActual,
-        Otro > AnioMantenimiento
-    ).
+conoce(Persona, Hazania, AnioQueLaConocio, Forma) :-
+    habitante(Persona, _, AnioNacimiento, Pueblo),
+    conmemora(Pueblo, Hazania, Forma, AnioEnQueEmpezo),
+    AnioQueLaConocio is max(AnioNacimiento, AnioEnQueEmpezo).
 
-% último cuidado = último mantenimiento o construcción
-ultimoCuidado(Estatua, AnioActual, Ultimo):-
-    ultimoMantenimiento(Estatua, AnioActual, Ultimo).
+seLeOlvido(estatua(Estatua), _, AnioActual) :-
+    not(estatuaEnBuenEstado(Estatua, AnioActual)).
 
-ultimoCuidado(Estatua, AnioActual, Construccion):-
-    estatua(_, _, Estatua, _, Construccion),
-    Construccion =< AnioActual,
-    \+ (
-        mantenimiento(Estatua, M),
-        M =< AnioActual
-    ).
+tuvoUnCuidado(Estatua, Anio) :- mantenimiento(Estatua, Anio).
+tuvoUnCuidado(Estatua, Anio) :- conmemora(_, _, estatua(Estatua), Anio).
 
-estatuaEnBuenEstado(Estatua, AnioActual):-
-    estatua(_, Material, Estatua, _, _),
-    ultimoCuidado(Estatua, AnioActual, Ultimo),
+estatuaEnBuenEstado(Estatua, AnioActual) :-
+    tuvoUnCuidado(Estatua, AnioDelCuidado),
+    AnioDelCuidado =< AnioActual,
+    materialDeEstatua(Estatua, Material),
     duracionMaterial(Material, Duracion),
-    AnioActual =< Ultimo + Duracion.
-
-% si nació después de la conmemoración, la conoce al nacer
-% si ya había nacido, la conoce cuando empieza la conmemoración
-anioConocimiento(Persona, InicioConmemoracion, Anio):-
-    habitante(Persona, _, Nacimiento, _),
-    Anio is max(Nacimiento, InicioConmemoracion).
-
-% recuerda por día festivo
-recuerdaHazania(Persona, Hazania, AnioActual):-
-    habitante(Persona, _, _, Pueblo),
-    diaFestivo(Pueblo, Hazania, Inicio),
-    anioConocimiento(Persona, Inicio, Desde),
-    AnioActual >= Desde,
-    estaVivo(Persona, AnioActual).
-
-% recuerda por estatua
-recuerdaHazania(Persona, Hazania, AnioActual):-
-    habitante(Persona, _, _, Pueblo),
-    estatua(Pueblo, _, Estatua, Hazania, Inicio),
-    anioConocimiento(Persona, Inicio, Desde),
-    AnioActual >= Desde,
-    estatuaEnBuenEstado(Estatua, AnioActual),
-    estaVivo(Persona, AnioActual).
+    AnioActual =< AnioDelCuidado + Duracion.
 
 :- begin_tests(tpIntegrador, []).
 % Tests Punto 1
