@@ -1,6 +1,6 @@
 % Punto 1 (Cristian)
 % a)
-habitante(denek, humano, 1290, auberst).
+habitante(denken, humano, 1290, auberst).
 habitante(voll, enano, 1200, ende).
 habitante(serie, elfo, 500, weise).
 habitante(fern, humano, 1370, weise).
@@ -37,12 +37,12 @@ conoce(voll,    hazania(destruirDemonioAura, auberst),  1400, libro(50)).
 conoce(serie,   hazania(destruirReyDemonio, ende),      1335, libro(100)).
 
 % participo(Heroe, Hazania)
-participo(strak,   hazania(rescatarHermanaWirbel, klares)).
+participo(stark,   hazania(rescatarHermanaWirbel, klares)).
 participo(fern,    hazania(rescatarHermanaWirbel, klares)).
 participo(himmel,  hazania(recuperarGatoPerdido, weise)).
 participo(frieren, hazania(recuperarGatoPerdido, weise)).
 participo(frieren, hazania(destruirDemonioAura, weise)).
-participo(denek,   hazania(destruirDemonioAura, auberst)).
+participo(denken,   hazania(destruirDemonioAura, auberst)).
 participo(frieren, hazania(destruirReyDemonio, ende)).
 participo(himmel,  hazania(destruirReyDemonio, ende)).
 participo(heiter,  hazania(destruirReyDemonio, ende)).
@@ -116,7 +116,7 @@ estatuaEnBuenEstado(Estatua, AnioActual) :-
     duracionMaterial(Material, Duracion),
     AnioActual =< AnioDelCuidado + Duracion.
 
-% Punto 4 Fran
+% Punto 4 (Fran)
 pueblo(auberst).
 pueblo(ende).
 pueblo(weise).
@@ -200,8 +200,38 @@ viveTiemposSinPrecedentes(Pueblo, Anio) :-
         fuePresenciadaEn(Pueblo, Hazania, Anio)
     ).
 
+% Punto 5 (Cristian)
+% a)
+esHeroe(Persona) :-
+    participo(Persona, Hazania),
+    conoce(_, Hazania, _, _).
+
+% b)
+inspiroAlHeroe(Inspirador, Heroe):-
+    participo(Inspirador, Hazania),
+    conoce(Heroe, Hazania, _, _),
+    Inspirador \= Heroe.
+
+% c)
+cadenaInspiracion(Inicio, Fin, Cadena) :-
+    caminoInspiracion(Inicio, Fin, [Inicio], Cadena).
+
+%Caso base
+caminoInspiracion(Inicio, Fin, Visitados, Cadena) :-
+    inspiroAlHeroe(Inicio, Fin),
+    not(member(Fin, Visitados)),
+    append(Visitados, [Fin], Cadena).
+
+%Caso recursivo
+caminoInspiracion(Inicio, Fin, Visitados, Cadena) :-
+    inspiroAlHeroe(Inicio, Intermedio),
+    not(member(Intermedio, Visitados)),
+    append(Visitados, [Intermedio], NuevosVisitados),
+    caminoInspiracion(Intermedio, Fin, NuevosVisitados, Cadena).
+
+
 :- begin_tests(tpIntegrador, []).
-% Tests Punto 1
+% Tests Punto 1 (Cristian)
 test("Kanne (humana, nacida en 1365) está viva en 1370.", nondet):-
     estaVivo(kanne, 1370).
 test("Kanne no está viva en 1300, porque todavía no había nacido."):-
@@ -215,7 +245,7 @@ test("Voll ya no está vivo en 1551."):-
 test("Serie está viva en el año 5000 porque los elfos no mueren de viejos.", nondet):-
     estaVivo(serie, 5000).
 
-% Tests Punto 2
+% Tests Punto 2 (Fran)
 test("Lawine no recuerda destruir al demonio Aura en 1380 porque aun no escucho una cancion sobre esa hazana."):-
     \+ recuerdaHazania(lawine, destruirDemonioAura, 1380).
 test("Lawine recuerda destruir al demonio Aura en 1400", nondet):-
@@ -250,7 +280,7 @@ test("Lawine no recuerda destruir al rey demonio en 1390"):-
 test("Fern recuerda destruir al rey demonio en 1400", nondet):-
     recuerdaHazania(fern, destruirReyDemonio, 1400).
 
-% Tests Punto 4 Fran
+% Tests Punto 4 (Fran)
 
 test("En Weise se recuerda destruir al rey demonio en 1400", nondet):-
     seRecuerdaEn(weise, destruirReyDemonio, 1400).
@@ -288,5 +318,23 @@ test("Klares vive tiempos sin precedentes en 1395", nondet):-
     viveTiemposSinPrecedentes(klares, 1395).
 test("Weise no vive tiempos sin precedentes en 1400, destruir al rey demonio es importante para Weise pero nadie de alli presencio esa hazana"):-
     \+ viveTiemposSinPrecedentes(weise, 1400).
+
+% Tests Punto 5 (Cristian)
+test("Frieren es un héroe, ya que participó en al menos una hazaña que alguien conoce", nondet):-
+    esHeroe(frieren).
+test("Wirbel no es un héroe porque no participó en ninguna hazaña"):-
+    not(esHeroe(wirbel)).
+test("Frieren inspiró a Fern (Fern conoce destruir al rey demonio en donde Frieren participó)", nondet):-
+    inspiroAlHeroe(frieren, fern).
+test("Stark inspiró a Frieren (Frieren conoce rescatar a la hermana de Wirbel en la que participó Stark)", nondet):-
+    inspiroAlHeroe(stark, frieren).
+test("Nadie inspiró a Eisen a ser un héroe, ya que no sabemos de ninguna hazaña que él conozca"):-
+    not(inspiroAlHeroe(Inspirador, eisen)).
+test("Himmel -> Fern -> Frieren -> Denken es una cadena de inspiracion valida", nondet):-
+    cadenaInspiracion(himmel, denken, [himmel, fern, frieren, denken]).
+test("Denken → Frieren no es una cadena de inspiración válida porque Denken no inspiró a Frieren"):-
+    not(cadenaInspiracion(denken, frieren, _)).
+test("Frieren → Fern → Frieren no es una cadena de inspiración válida ya que se repite 2 veces a un héroe"):-
+    not(cadenaInspiracion(frieren, frieren, [frieren, fern, frieren])).
 
 :- end_tests(tpIntegrador).
