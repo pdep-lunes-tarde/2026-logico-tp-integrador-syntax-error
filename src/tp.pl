@@ -80,17 +80,15 @@ pasoAlOlvido(Hazania, AnioActual) :-
     seConoceHazania(Hazania, _),
     not(recuerdaHazania(_, Hazania, AnioActual)).
 
-
 % Punto 3 (Andrea)
 % conmemora(Pueblo, Hazania, Forma, AnioEnQueEmpezo)
-conmemora(weise,   hazania(destruirReyDemonio, ende),        diaFestivo,           1340).
-conmemora(auberst, hazania(destruirReyDemonio, ende),        estatua(equipoHeroes), 1370).
-conmemora(auberst, hazania(destruirSchlatOmnisciente, ende), estatua(heroeDelSur),  1340).
+conmemora(weise,   hazania(destruirReyDemonio, ende),       diaFestivo,          1340).
+conmemora(auberst, hazania(destruirReyDemonio, ende),       estatua(equipoHeroes), 1370).
+conmemora(auberst, hazania(destruirSchlatOmnisciente, ende), estatua(heroeDelSur), 1340).
 
 materialDeEstatua(equipoHeroes, bronce).
 materialDeEstatua(heroeDelSur, marmol).
 
-% mantenimiento(Estatua, Anio)
 mantenimiento(equipoHeroes, 1400).
 mantenimiento(equipoHeroes, 1450).
 mantenimiento(heroeDelSur, 1410).
@@ -104,17 +102,14 @@ conoce(Persona, Hazania, AnioQueLaConocio, Forma) :-
     AnioQueLaConocio is max(AnioNacimiento, AnioEnQueEmpezo).
 
 seLeOlvido(estatua(Estatua), _, AnioActual) :-
-    not(estatuaEnBuenEstado(Estatua, AnioActual)).
-
-tuvoUnCuidado(Estatua, Anio) :- mantenimiento(Estatua, Anio).
-tuvoUnCuidado(Estatua, Anio) :- conmemora(_, _, estatua(Estatua), Anio).
-
-estatuaEnBuenEstado(Estatua, AnioActual) :-
-    tuvoUnCuidado(Estatua, AnioDelCuidado),
-    AnioDelCuidado =< AnioActual,
     materialDeEstatua(Estatua, Material),
     duracionMaterial(Material, Duracion),
-    AnioActual =< AnioDelCuidado + Duracion.
+    not(estaEstatuaEnBuenEstado(Estatua, AnioActual, Duracion)).
+
+estaEstatuaEnBuenEstado(Estatua, AnioActual, Duracion) :-
+    mantenimiento(Estatua, AnioCuidado),
+    AnioCuidado =< AnioActual,
+    AnioActual =< AnioCuidado + Duracion.
 
 % Punto 4 (Fran)
 pueblo(auberst).
@@ -230,6 +225,24 @@ caminoInspiracion(Inicio, Fin, Visitados, Cadena) :-
     caminoInspiracion(Intermedio, Fin, NuevosVisitados, Cadena).
 
 
+% Punto 6 (Andrea)
+
+dreamTeam(Heroe, Equipo) :-
+    member(Heroe, Equipo),
+    cadenaInspiracionDentroDelEquipo(Heroe, Equipo).
+
+cadenaInspiracionDentroDelEquipo(Heroe, Equipo) :-
+    member(Antecesor, Equipo),
+    Antecesor \= Heroe,
+    cadenaInspiracion(Antecesor, Heroe, Cadena),
+    todosEstanEnEquipo(Cadena, Equipo).
+
+todosEstanEnEquipo([], _).
+todosEstanEnEquipo([Heroe|Resto], Equipo) :-
+    member(Heroe, Equipo),
+    todosEstanEnEquipo(Resto, Equipo).
+
+
 :- begin_tests(tpIntegrador, []).
 % Tests Punto 1 (Cristian)
 test("Kanne (humana, nacida en 1365) está viva en 1370.", nondet):-
@@ -336,5 +349,35 @@ test("Denken → Frieren no es una cadena de inspiración válida porque Denken 
     not(cadenaInspiracion(denken, frieren, _)).
 test("Frieren → Fern → Frieren no es una cadena de inspiración válida ya que se repite 2 veces a un héroe"):-
     not(cadenaInspiracion(frieren, frieren, [frieren, fern, frieren])).
+
+
+% Tests Punto 6 (Andrea)
+
+test("Para Fern, Fern + Himmel es un dream team valido", nondet) :-
+    dreamTeam(fern, [fern, himmel]).
+
+test("Para Fern, Himmel + Fern tambien es un dream team valido", nondet) :-
+    dreamTeam(fern, [himmel, fern]).
+
+test("Para Fern, Fern sola no es un dream team valido") :-
+    \+ dreamTeam(fern, [fern]).
+
+test("Para Fern, Frieren sola no es un dream team valido") :-
+    \+ dreamTeam(fern, [frieren]).
+
+test("Para Fern, Himmel + Frieren no es un dream team valido") :-
+    \+ dreamTeam(fern, [himmel, frieren]).
+
+test("Para Denken, Fern + Frieren + Denken es un dream team valido", nondet) :-
+    dreamTeam(denken, [fern, frieren, denken]).
+
+test("Para Denken, Himmel + Denken es un dream team valido porque Himmel es antecesor de Denken", nondet) :-
+    dreamTeam(denken, [himmel, denken]).
+
+test("Para Denken, Fern + Denken no es un dream team valido") :-
+    \+ dreamTeam(denken, [fern, denken]).
+
+test("Para Denken, Denken solo no es un dream team valido") :-
+    \+ dreamTeam(denken, [denken]).
 
 :- end_tests(tpIntegrador).
