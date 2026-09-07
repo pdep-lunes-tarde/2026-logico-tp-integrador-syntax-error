@@ -200,30 +200,28 @@ viveTiemposSinPrecedentes(Pueblo, Anio) :-
 esHeroe(Persona) :-
     participo(Persona, Hazania),
     conoce(_, Hazania, _, _).
-
+    
 % b)
-inspiroAlHeroe(Inspirador, Heroe):-
+inspiroAlHeroe(Inspirador, Heroe) :-
+    esHeroe(Inspirador),
+    esHeroe(Heroe),
+    Inspirador \= Heroe,
     participo(Inspirador, Hazania),
-    conoce(Heroe, Hazania, _, _),
-    Inspirador \= Heroe.
+    conoce(Heroe, Hazania, _, _).
 
 % c)
-cadenaInspiracion(Inicio, Fin, Cadena) :-
-    caminoInspiracion(Inicio, Fin, [Inicio], Cadena).
+cadenaInspiracion([Inicio|Resto]) :-
+    esHeroe(Inicio),
+    caminoInspiracion(Inicio, [Inicio], Resto).
 
-%Caso base
-caminoInspiracion(Inicio, Fin, Visitados, Cadena) :-
-    inspiroAlHeroe(Inicio, Fin),
-    not(member(Fin, Visitados)),
-    append(Visitados, [Fin], Cadena).
+caminoInspiracion(Actual, Visitados, [Siguiente]) :-
+    inspiroAlHeroe(Actual, Siguiente),
+    not(member(Siguiente, Visitados)).
 
-%Caso recursivo
-caminoInspiracion(Inicio, Fin, Visitados, Cadena) :-
-    inspiroAlHeroe(Inicio, Intermedio),
-    not(member(Intermedio, Visitados)),
-    append(Visitados, [Intermedio], NuevosVisitados),
-    caminoInspiracion(Intermedio, Fin, NuevosVisitados, Cadena).
-
+caminoInspiracion(Actual, Visitados, [Siguiente|Resto]) :-
+    inspiroAlHeroe(Actual, Siguiente),
+    not(member(Siguiente, Visitados)),
+    caminoInspiracion(Siguiente, [Siguiente|Visitados], Resto).
 
 % Punto 6 (Andrea)
 
@@ -234,7 +232,7 @@ dreamTeam(Heroe, Equipo) :-
 cadenaInspiracionDentroDelEquipo(Heroe, Equipo) :-
     member(Antecesor, Equipo),
     Antecesor \= Heroe,
-    cadenaInspiracion(Antecesor, Heroe, Cadena),
+    cadenaInspiracion(Cadena), % Lo cambie por el de aridad 1
     todosEstanEnEquipo(Cadena, Equipo).
 
 todosEstanEnEquipo([], _).
@@ -344,11 +342,11 @@ test("Stark inspiró a Frieren (Frieren conoce rescatar a la hermana de Wirbel e
 test("Nadie inspiró a Eisen a ser un héroe, ya que no sabemos de ninguna hazaña que él conozca"):-
     not(inspiroAlHeroe(Inspirador, eisen)).
 test("Himmel -> Fern -> Frieren -> Denken es una cadena de inspiracion valida", nondet):-
-    cadenaInspiracion(himmel, denken, [himmel, fern, frieren, denken]).
+    cadenaInspiracion([himmel, fern, frieren, denken]).
 test("Denken → Frieren no es una cadena de inspiración válida porque Denken no inspiró a Frieren"):-
-    not(cadenaInspiracion(denken, frieren, _)).
+    not(cadenaInspiracion([denken, frieren])).
 test("Frieren → Fern → Frieren no es una cadena de inspiración válida ya que se repite 2 veces a un héroe"):-
-    not(cadenaInspiracion(frieren, frieren, [frieren, fern, frieren])).
+    not(cadenaInspiracion([frieren, fern, frieren])).
 
 
 % Tests Punto 6 (Andrea)
